@@ -71,8 +71,15 @@ public class BotClient
 
             if (interaction.Type == InteractionType.ApplicationCommand)
             {
-                await interaction.GetOriginalResponseAsync()
-                    .ContinueWith(async msg => await msg.Result.DeleteAsync());
+                try
+                {
+                    var original = await interaction.GetOriginalResponseAsync();
+                    await original.DeleteAsync();
+                }
+                catch (Exception cleanupEx)
+                {
+                    Log.Warning(cleanupEx, "Failed to delete original response for interaction {InteractionId}", interaction.Id);
+                }
             }
         }
     }
