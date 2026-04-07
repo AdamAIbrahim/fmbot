@@ -1,35 +1,23 @@
-# Visual Studio
-*.suo
-*.user
-*.sln.docstates
-*.obj
-*.pch
-*.tlog
-*.log
-*.scc
-*.exp
-*.ilk
-*.lastbuildstate
-vc100.pdb
-ipch
-*.sdf
-*.opensdf
-*.idb
-*.zip
-[Dd]ebug*/
-[Rr]elease*/
-/src/.vs/FMBot_Discord/v15/Server/sqlite3
-/src/FMBot_Discord/bin
-/src/.vs/FMBot_Discord/v16/Server/sqlite3
-config.json
-
+# Build output
 bin/
 obj/
-Logs/
 
-packages/
-src/.vs/
+# IDE
 .vs/
+.idea/
+*.suo
+*.user
+*.DotSettings.user
+*.log
 
+# Runtime / secrets
+src/appsettings.local.json
+*.db
+*.db-shm
+*.db-wal
+
+# macOS
 .DS_Store
+
+# aider
 .aider*
