@@ -1,47 +1,93 @@
-<p align="center">
-   <img src="https://raw.githubusercontent.com/fmbot-discord/fmbot/main/fmbotlogo.png" width="350" alt=".fmbot logo">
-</p>
-<h3 align="center">
-   <a href="https://fm.bot/">A source-available Last.fm Discord bot.</a>
-</h3>
-<p align="center">
-  <a href="https://www.codacy.com/gh/fmbot-discord/fmbot/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fmbot-discord/fmbot&amp;utm_campaign=Badge_Grade"><img src="https://app.codacy.com/project/badge/Grade/e793453ce7d048f696357408b3abbb8c" alt="Codacy code quality"/></a>
-  <a href="http://discord.gg/fmbot/"><img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg" alt="Join our server"></a>
-  <a href="https://top.gg/bot/356268235697553409"><img src="https://top.gg/api/widget/status/356268235697553409.svg?noavatar=true" alt="Discord bot status"></a>
-  <a href="https://top.gg/bot/356268235697553409"><img src="https://top.gg/api/widget/servers/356268235697553409.svg?noavatar=true" alt="Discord bot server amount"></a>
-</p>
-<p align="center">
-.fmbot is a social Discord bot that provides music statistics for you, your friends, and your fellow server members.
-</p>
-<p align="center">
-Easily see who listens to your favorite artist in a server and make new friends. Or discover new artists within your favorite genres.
-</p>
+# SteamBot
 
-<hr />
+A Discord bot that shows Steam game stats for any registered user.
 
-Documentation and website: [fm.bot](https://fm.bot/)
+## Features
 
-Join our Discord server: [discord.gg/fmbot](https://discord.gg/fmbot)
+| Command | Description |
+|---|---|
+| `/steam register <steam_id>` | Link your Steam account to your Discord user |
+| `/steam unregister` | Unlink your Steam account |
+| `/profile [user]` | View a Steam profile — level, games owned, total hours, current game |
+| `/recentgames [user]` | Games played in the last 2 weeks |
+| `/topgames [user] [count]` | Most-played games by total hours (up to 25) |
 
-[Click here to add the bot to your server](https://discord.com/oauth2/authorize?client_id=356268235697553409&permissions=275415092288&scope=applications.commands%20bot)
+`steam_id` accepts:
+- A **SteamID64** (17-digit number, e.g. `76561197960287930`)
+- A **vanity URL name** (e.g. `gaben`)
+- A **full Steam profile URL** (`https://steamcommunity.com/id/gaben` or `.../profiles/...`)
 
-[Click here to add the bot to your Discord account (User app)](https://discord.com/oauth2/authorize?client_id=356268235697553409&scope=applications.commands&integration_type=1)
+## Setup
 
-<h3>Funding</h3>
+### Prerequisites
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- A [Discord bot token](https://discord.com/developers/applications)
+- A [Steam Web API key](https://steamcommunity.com/dev/apikey)
 
-For funding, see [.fmbot supporter](https://fm.bot/supporter/). 
+### Configuration
 
-Supporting helps us maintain and host the bot, while you get some nice perks in return.
+Edit `src/appsettings.json`:
 
-<h3>Packages</h3>
+```json
+{
+  "Bot": {
+    "DiscordToken": "YOUR_DISCORD_BOT_TOKEN",
+    "SteamApiKey": "YOUR_STEAM_API_KEY",
+    "DatabasePath": "steambot.db",
+    "TestGuildId": null
+  }
+}
+```
 
-See our Docker builds on [Github Packages](https://github.com/fmbot-discord/fmbot/pkgs/container/fmbot).
+- **DiscordToken** — Bot token from the [Discord Developer Portal](https://discord.com/developers/applications)
+- **SteamApiKey** — API key from [Steam Dev](https://steamcommunity.com/dev/apikey)
+- **DatabasePath** — SQLite file path (created automatically on first run)
+- **TestGuildId** — (Optional) Your server's guild ID for instant slash command registration during development. Set to `null` for global registration (takes up to 1 hour to propagate).
 
-| Git branch | Type      | Discord username     | Invite link
-|---|---|---|---|
-| main   | production    | .fmbot#8173          | [https://discord.com/api/oa...](https://discord.com/api/oauth2/authorize?client_id=356268235697553409&permissions=275415092288&scope=applications.commands%20bot)
-| dev    | beta/develop  | .fmbot develop#7613  | Closed for invites
+You can also override any setting via environment variables prefixed with `STEAMBOT_`, e.g.:
+```
+STEAMBOT_Bot__DiscordToken=your_token
+STEAMBOT_Bot__SteamApiKey=your_key
+```
 
-<h3>Thanks</h3>
+### Discord Bot Settings
 
-Thanks to Last.fm and it's community, the Last.fm developer community, the .fmbot community, contributors and staff, all supporters and all others who have helped out.
+In the Discord Developer Portal, enable:
+- **`applications.commands`** scope (required for slash commands)
+- **`bot`** scope
+- No message content intent required — the bot uses slash commands only.
+
+### Running
+
+```bash
+dotnet run --project src/SteamBot.csproj
+# or publish:
+dotnet publish src/SteamBot.csproj -c Release -o ./publish
+./publish/SteamBot
+```
+
+## Project Structure
+
+```
+SteamBot/
+├── src/
+│   ├── Config/          BotConfig — loaded from appsettings.json
+│   ├── Data/            EF Core DbContext + UserRepository (SQLite)
+│   │   └── Entities/    RegisteredUser entity
+│   ├── Steam/           Steam Web API client + response models
+│   │   └── Models/
+│   ├── Discord/         Discord.Net bot client
+│   │   └── Modules/
+│   │       ├── UserModule.cs    /steam register|unregister
+│   │       └── SteamModule.cs   /profile /recentgames /topgames
+│   ├── Program.cs       Entry point — DI wiring, DB bootstrap, startup
+│   ├── SteamBot.csproj
+│   └── appsettings.json
+└── SteamBot.slnx
+```
+
+**Stack:**
+- [Discord.Net](https://github.com/discord-net/Discord.Net) — Discord API
+- [EF Core + SQLite](https://learn.microsoft.com/en-us/ef/core/) — user registration persistence
+- [Serilog](https://serilog.net/) — structured logging
+- Steam Web API via plain `HttpClient` + `System.Text.Json` — no third-party SDK

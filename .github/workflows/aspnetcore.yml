@@ -1,4 +1,4 @@
-name: ASP.NET Core CI
+name: .NET Build
 
 on: [push, pull_request]
 
@@ -6,10 +6,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 10.0.x
-    - name: Build with dotnet
-      run: dotnet build ./src/FMBot.Discord.sln --configuration Release
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore src/SteamBot.csproj
+      - name: Build
+        run: dotnet build src/SteamBot.csproj --configuration Release --no-restore
