@@ -43,4 +43,7 @@ public class UserRepository
         await _db.SaveChangesAsync();
         return true;
     }
+
+    public async Task<List<RegisteredUser>> GetAllAsync() =>
+        await _db.RegisteredUsers.ToListAsync();
 }
