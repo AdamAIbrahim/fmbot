@@ -46,4 +46,33 @@ public class UserRepository
 
     public async Task<List<RegisteredUser>> GetAllAsync() =>
         await _db.RegisteredUsers.ToListAsync();
+
+    public async Task<List<Friend>> GetFriendsAsync(ulong discordUserId) =>
+        await _db.Friends.Where(f => f.DiscordUserId == discordUserId).ToListAsync();
+
+    public async Task<bool> AddFriendAsync(ulong discordUserId, ulong friendDiscordUserId)
+    {
+        var exists = await _db.Friends.AnyAsync(
+            f => f.DiscordUserId == discordUserId && f.FriendDiscordUserId == friendDiscordUserId);
+        if (exists) return false;
+
+        _db.Friends.Add(new Friend
+        {
+            DiscordUserId = discordUserId,
+            FriendDiscordUserId = friendDiscordUserId
+        });
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> RemoveFriendAsync(ulong discordUserId, ulong friendDiscordUserId)
+    {
+        var entry = await _db.Friends.FirstOrDefaultAsync(
+            f => f.DiscordUserId == discordUserId && f.FriendDiscordUserId == friendDiscordUserId);
+        if (entry is null) return false;
+
+        _db.Friends.Remove(entry);
+        await _db.SaveChangesAsync();
+        return true;
+    }
 }
