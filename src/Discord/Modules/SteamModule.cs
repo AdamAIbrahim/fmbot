@@ -15,7 +15,7 @@ public class SteamModule : InteractionModuleBase<SocketInteractionContext>
     private readonly SteamApiClient _steam;
 
     // Steam dark blue color used across embeds
-    private const uint SteamColor = 0x1b2838;
+    private const uint SteamColor = EmbedHelpers.SteamColor;
 
     public SteamModule(UserRepository users, SteamApiClient steam)
     {
@@ -251,13 +251,7 @@ public class SteamModule : InteractionModuleBase<SocketInteractionContext>
             .WithDescription($"❌ {message}")
             .Build();
 
-    private static string FormatHours(double hours) =>
-        hours switch
-        {
-            < 1 => $"{(int)(hours * 60)}m",
-            >= 1000 => $"{hours:N0}h",
-            _ => $"{hours:N1}h"
-        };
+    private static string FormatHours(double hours) => EmbedHelpers.FormatHours(hours);
 }
 
 // Tuple deconstruction helper for 3-way Task.WhenAll

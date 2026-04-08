@@ -70,6 +70,22 @@ try
     {
         var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
         await db.Database.EnsureCreatedAsync();
+
+        // Create the Friends table for databases created before this feature was added.
+        // EnsureCreated handles new databases; this covers existing ones.
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS "Friends" (
+                "Id"                   INTEGER NOT NULL CONSTRAINT "PK_Friends" PRIMARY KEY AUTOINCREMENT,
+                "DiscordUserId"        INTEGER NOT NULL,
+                "FriendDiscordUserId"  INTEGER NOT NULL,
+                "AddedAt"              TEXT    NOT NULL DEFAULT (datetime('now'))
+            )
+            """);
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_Friends_DiscordUserId_FriendDiscordUserId"
+            ON "Friends" ("DiscordUserId", "FriendDiscordUserId")
+            """);
+
         Log.Information("Database ready at {Path}", config.DatabasePath);
     }
 

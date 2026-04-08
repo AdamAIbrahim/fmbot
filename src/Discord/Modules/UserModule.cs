@@ -63,4 +63,61 @@ public class UserModule : InteractionModuleBase<SocketInteractionContext>
             : "⚠️ You don't have a Steam account linked.";
         await FollowupAsync(message, ephemeral: true);
     }
+
+    [SlashCommand("addfriend", "Add a server member to your Steam friends list")]
+    public async Task AddFriendAsync(
+        [Summary("user", "The Discord user to add as a friend")] IUser user)
+    {
+        await DeferAsync(ephemeral: true);
+
+        if (user.Id == Context.User.Id)
+        {
+            await FollowupAsync("❌ You can't add yourself as a friend.", ephemeral: true);
+            return;
+        }
+
+        var selfRegistered = await _users.GetByDiscordIdAsync(Context.User.Id);
+        if (selfRegistered is null)
+        {
+            await FollowupAsync("❌ You haven't linked a Steam account yet. Use `/steam register` first.", ephemeral: true);
+            return;
+        }
+
+        var friendRegistered = await _users.GetByDiscordIdAsync(user.Id);
+        if (friendRegistered is null)
+        {
+            await FollowupAsync($"❌ **{user.Username}** hasn't linked their Steam account yet.", ephemeral: true);
+            return;
+        }
+
+        var added = await _users.AddFriendAsync(Context.User.Id, user.Id);
+        if (!added)
+        {
+            await FollowupAsync($"⚠️ **{user.Username}** is already in your friends list.", ephemeral: true);
+            return;
+        }
+
+        var profile = await _steam.GetPlayerSummaryAsync(friendRegistered.SteamId);
+        var embed = new EmbedBuilder()
+            .WithColor(0x1b2838)
+            .WithTitle("✅ Friend Added")
+            .WithDescription($"**[{profile?.PersonaName ?? user.Username}]({profile?.ProfileUrl ?? "#"})** has been added to your Steam friends list.")
+            .WithThumbnailUrl(profile?.AvatarUrl)
+            .WithFooter("Use /friends to see what your friends are playing")
+            .Build();
+
+        await FollowupAsync(embed: embed, ephemeral: true);
+    }
+
+    [SlashCommand("removefriend", "Remove a server member from your Steam friends list")]
+    public async Task RemoveFriendAsync(
+        [Summary("user", "The Discord user to remove")] IUser user)
+    {
+        await DeferAsync(ephemeral: true);
+        var removed = await _users.RemoveFriendAsync(Context.User.Id, user.Id);
+        var message = removed
+            ? $"✅ **{user.Username}** has been removed from your friends list."
+            : $"⚠️ **{user.Username}** isn't in your friends list.";
+        await FollowupAsync(message, ephemeral: true);
+    }
 }
